@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                cleanWs()
+                // Get some code from a GitHub repository
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/devusops/java-demo.git']]])
+            }
+        }
+        stage('Build') {
+            steps {
+                //maven build
+                dir('/var/lib/jenkins/workspace/java-app') {
+                    sh "mvn clean install package"
+                }
+                
+            }
+        }
+        stage('Dockerbuild') {
+            steps {
+                //docker build
+                dir('/var/lib/jenkins/workspace/java-app') {
+                    sh 'sudo docker build -t java-app .'
+                }
+            }
+        }
+        stage('DcokerpushToRegistry') {
+            steps {
+                //docker build
+                dir('/var/lib/jenkins/workspace/java-app') {
+                    sh 'sudo docker build -t java-app .'
+                    sh 'sudo docker tag java-app:latest devusops/java-app:$BUILD_ID'
+                    sh 'sudo docker login -u devusops  --password *************'
+                    sh 'sudo docker push devusops/java-app:$BUILD_ID'
+                }
+            }
+        }
+        stage('DeployDocker') {
+            steps {
+                //docker build
+                    sh 'sudo docker login -u devusops  --password ************'
+                    sh 'docker run -d -p 81:8080 --name java-app-$BUILD_ID devusops/java-app:$BUILD_ID'
+                    sh 'echo "Pipeline completed succesfully"'
+                }
+            }
+        }
+        
+    }
