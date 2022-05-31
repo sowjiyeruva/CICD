@@ -1,0 +1,4 @@
+
+Add Jenkins user to to sudoers group 
+
+echo “jenkins  ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/jenkins
